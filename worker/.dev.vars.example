@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local development ONLY, never commit .dev.vars
+ADMIN_TOKEN=REPLACE_WITH_LONG_RANDOM_SECRET

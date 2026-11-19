@@ -1,0 +1,29 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "tamper-classroom-local",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-11-10",
+	"workers_dev": false,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "tamper-classroom-local",
+			"database_id": "00000000-0000-4000-8000-000000000001"
+		},
+		{
+			"binding": "tamper_classroom",
+			"database_name": "tamper-classroom",
+			"database_id": "7032ffe3-3637-4436-9084-f23fd50dc662",
+			"remote": true
+		}
+	],
+	"vars": {
+		"ALLOWED_ORIGIN": "http://127.0.0.1:5500",
+		"LOCAL_DEV": "true"
+	},
+	"triggers": {
+		"crons": [
+			"*/15 * * * *"
+		]
+	}
+}

@@ -1,0 +1,529 @@
+openapi: 3.0.3
+info:
+  title: Tamper Classroom API
+  version: 0.1.0
+  description: |
+    情報セキュリティ授業用のAI追記型改ざんシミュレーション。
+    掲示板APIは公開用の本文とハッシュ、投稿識別子、表示名、日時を返す。
+    JSONリクエストはUTF-8で2048バイトまで。レスポンスには Cache-Control: no-store を設定する。
+    ブラウザのOPTIONSには許可Origin・許可メソッド・許可ヘッダーを検証して204で応答する。
+    CORS拒否および本番HTTPは403。未定義のパスは404、未対応のメソッドは405。
+servers:
+  - url: https://tamper-classroom-api.example.workers.dev
+    description: Replace with the deployed Workers endpoint
+security: []
+paths:
+  /api/health:
+    get:
+      operationId: health
+      summary: Health check
+      responses:
+        '200':
+          description: Alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+  /api/rooms/{roomCode}:
+    parameters:
+      - $ref: '#/components/parameters/RoomCode'
+    get:
+      operationId: getPublicRoom
+      summary: Public room metadata
+      responses:
+        '200':
+          description: Room metadata only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicRoom'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/rooms/{roomCode}/posts:
+    parameters:
+      - $ref: '#/components/parameters/RoomCode'
+    get:
+      operationId: listPublicPosts
+      summary: Published text and its SHA-256
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 120
+            default: 120
+      responses:
+        '200':
+          description: Publicly visible posts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roomCode, posts]
+                properties:
+                  roomCode:
+                    type: string
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicPost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      operationId: createPost
+      summary: Submit a student's expectation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Accepted and stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostReceipt'
+        '200':
+          description: Idempotent retry of a completed post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostReceipt'
+        '202':
+          description: The same idempotency key is still processing
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                enum: [2]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingReceipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/session:
+    get:
+      operationId: checkAdminToken
+      summary: Verify the teacher token before showing management controls
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Authenticated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/rooms:
+    post:
+      operationId: createRoom
+      summary: Create a lesson room
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Created room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/rooms/{roomCode}:
+    parameters:
+      - $ref: '#/components/parameters/RoomCode'
+    get:
+      operationId: getAdminRoom
+      summary: Room settings and counters
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      operationId: updateRoom
+      summary: Set open/closed, tamper flag, probability
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Updated room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      operationId: deleteRoom
+      summary: Delete room and all posts
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/rooms/{roomCode}/posts:
+    parameters:
+      - $ref: '#/components/parameters/RoomCode'
+    delete:
+      operationId: clearPosts
+      summary: Delete all posts and reset room counter
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Cleared
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/rooms/{roomCode}/reveal:
+    parameters:
+      - $ref: '#/components/parameters/RoomCode'
+    get:
+      operationId: revealPosts
+      summary: Teacher-only comparison of original and published text
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All completed posts with originals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roomCode, posts]
+                properties:
+                  roomCode:
+                    type: string
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RevealedPost'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    RoomCode:
+      name: roomCode
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 24
+        pattern: '^[ABCDEFGHJKLMNPQRSTUVWXYZ2-9]+$'
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid admin token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Room was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Room closed, expired, or submission limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Room capacity reached
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Storage or service temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    PublicRoom:
+      type: object
+      required: [roomCode, title, open, expiresAt, postCount]
+      properties:
+        roomCode:
+          type: string
+        title:
+          type: string
+        open:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        postCount:
+          type: integer
+          minimum: 0
+    CreatePostRequest:
+      type: object
+      additionalProperties: false
+      required: [text, clientId, idempotencyKey]
+      properties:
+        nickname:
+          type: string
+          maxLength: 20
+        text:
+          type: string
+          description: 10 to 400 Unicode code points after trimming surrounding whitespace
+        clientId:
+          type: string
+          format: uuid
+        idempotencyKey:
+          type: string
+          format: uuid
+    PublicPost:
+      type: object
+      additionalProperties: false
+      required: [id, nickname, publishedText, publishedSha256, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+        publishedText:
+          type: string
+        publishedSha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        createdAt:
+          type: string
+          format: date-time
+    PostReceipt:
+      type: object
+      additionalProperties: false
+      required: [postId, createdAt, status]
+      properties:
+        postId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [accepted]
+    PendingReceipt:
+      type: object
+      additionalProperties: false
+      required: [postId, status]
+      properties:
+        postId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing]
+    CreateRoomRequest:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 80
+        tamperEnabled:
+          type: boolean
+          default: true
+        tamperProbability:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.7
+    UpdateRoomRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        open:
+          type: boolean
+        tamperEnabled:
+          type: boolean
+        tamperProbability:
+          type: number
+          minimum: 0
+          maximum: 1
+    AdminRoom:
+      allOf:
+        - $ref: '#/components/schemas/PublicRoom'
+        - type: object
+          required: [tamperEnabled, tamperProbability, createdAt, aiCount, fallbackCount]
+          properties:
+            tamperEnabled:
+              type: boolean
+            tamperProbability:
+              type: number
+              minimum: 0
+              maximum: 1
+            createdAt:
+              type: string
+              format: date-time
+            aiCount:
+              type: integer
+              minimum: 0
+            fallbackCount:
+              type: integer
+              minimum: 0
+    RevealedPost:
+      type: object
+      additionalProperties: false
+      required: [id, nickname, publishedText, publishedSha256, createdAt, originalText, originalSha256, appendedText, tamperApplied, generationSource]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+        publishedText:
+          type: string
+        publishedSha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        createdAt:
+          type: string
+          format: date-time
+        originalText:
+          type: string
+        originalSha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        appendedText:
+          type: string
+          nullable: true
+        tamperApplied:
+          type: boolean
+        generationSource:
+          type: string
+          enum: [none, ai, fallback]

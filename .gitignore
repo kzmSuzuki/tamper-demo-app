@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
+worker/wrangler.production.jsonc
+.dist/
+.DS_Store
+docs/
+AGENTS.md
+TASKS.md

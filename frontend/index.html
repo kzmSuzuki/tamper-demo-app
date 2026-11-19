@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https: http://127.0.0.1:8787; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>特別授業への期待</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/submit.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="shell"><a class="brand" href="./">特別授業への期待</a></div></header>
+  <main class="shell narrow">
+    <h1>特別授業への期待を教えてください</h1>
+    <p class="intro">後半の特別授業で、楽しみにしていることや挑戦してみたいことを書いてください。</p>
+    <aside class="notice">投稿は授業内の演習で掲示します。実際の授業アンケートには使いません。<strong>実名・学籍番号・連絡先</strong>は書かないでください。</aside>
+    <form id="join" class="panel" hidden>
+      <label for="code">ルームコード</label>
+      <div class="row join-action"><input id="code" name="room" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" required><button>参加する</button></div>
+    </form>
+    <p id="status" class="status" role="status"></p>
+    <button id="retry-room" type="button" class="secondary" hidden>ルームを再確認</button>
+    <form id="post" class="panel stack" hidden>
+      <div>
+        <label for="nickname">ニックネーム <span class="muted">任意・20文字まで</span></label>
+        <input id="nickname" autocomplete="off" placeholder="空欄なら匿名名を割り当てます">
+      </div>
+      <div>
+        <label for="expectation">特別授業に期待すること</label>
+        <textarea id="expectation" rows="6" required aria-describedby="count"></textarea>
+        <p id="count" class="field-note">0 / 400文字（10文字以上）</p>
+      </div>
+      <div><button id="send">投稿する</button></div>
+    </form>
+    <section id="receipt" class="panel stack" hidden aria-labelledby="receipt-title">
+      <h2 id="receipt-title" tabindex="-1">投稿を受け付けました</h2>
+      <blockquote id="original" class="post-text"></blockquote>
+      <div>
+        <h3>原文の SHA-256</h3>
+        <code id="original-hash" class="hash"></code>
+        <p class="field-note">この値を後で掲示板の SHA-256 と比較できます。閉じる前にコピーしてください。</p>
+      </div>
+      <div class="row">
+        <button type="button" class="secondary" id="copy-hash">SHA-256をコピー</button>
+        <a id="board-link" target="_blank" rel="noopener noreferrer">掲示板で投稿を見る</a>
+        <button type="button" class="secondary" id="new-post">続けて投稿</button>
+      </div>
+    </section>
+    <p id="copy-status" role="status" class="status"></p>
+  </main>
+</body>
+</html>

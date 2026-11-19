@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https: http://127.0.0.1:8787; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>教員管理 | 特別授業への期待</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/admin.js"></script>
+</head>
+<body>
+  <header class="site-header"><div class="shell"><a class="brand" href="./">特別授業への期待</a><button id="logout" class="secondary" type="button" hidden>トークンを消去</button></div></header>
+  <main class="shell manage">
+    <h1>授業ルーム管理</h1>
+    <form id="auth" class="panel stack" autocomplete="off">
+      <div><label for="token">教員トークン</label><input id="token" type="password" required minlength="32" maxlength="512" autocomplete="off" spellcheck="false"></div>
+      <div><button id="authenticate">管理操作を開く</button></div>
+    </form>
+    <p id="status" class="status" role="status"></p>
+    <div id="management" class="stack" hidden>
+      <div class="grid">
+        <form id="create" class="panel stack">
+          <h2>新しいルーム</h2>
+          <div><label for="title">タイトル</label><input id="title" value="特別授業への期待" required></div>
+          <div><button>作成する</button></div>
+        </form>
+        <form id="load" class="panel stack">
+          <h2>既存のルーム</h2>
+          <div><label for="code">ルームコード</label><input id="code" maxlength="24" required autocomplete="off" autocapitalize="characters"></div>
+          <div><button>読み込む</button></div>
+        </form>
+      </div>
+      <section id="room" class="panel stack" hidden>
+        <div class="row spread"><h2 id="room-title"></h2><span id="room-code" class="room-code"></span></div>
+        <div class="row spread">
+          <p id="room-info" class="muted"></p>
+          <button id="reload-room" class="secondary" type="button">集計を更新</button>
+        </div>
+        <div class="share-links">
+          <div class="row">
+            <a id="student-link" target="_blank" rel="noopener noreferrer">学生画面を開く</a>
+            <button id="copy-student" class="secondary" type="button">学生用URLをコピー</button>
+          </div>
+          <div class="row">
+            <a id="board-link" target="_blank" rel="noopener noreferrer">掲示板を開く</a>
+            <button id="copy-board" class="secondary" type="button">掲示板URLをコピー</button>
+          </div>
+        </div>
+        <form id="settings" class="settings stack">
+          <h3>受付と改ざんの設定</h3>
+          <div class="row">
+            <label class="check"><input id="open" type="checkbox"> 投稿受付 OPEN</label>
+            <label class="check"><input id="enabled" type="checkbox"> 改ざん ON</label>
+          </div>
+          <div class="probability"><label for="probability">改ざん確率（%）</label><input id="probability" type="number" min="0" max="100" step="any" required></div>
+          <div><button>設定を保存</button></div>
+        </form>
+        <div class="room-actions row spread">
+          <button id="reveal-button" type="button">種明かしを表示</button>
+          <div class="row">
+            <button id="clear-posts" type="button" class="danger">投稿を全件削除</button>
+            <button id="delete-room" type="button" class="danger">ルームを削除</button>
+          </div>
+        </div>
+      </section>
+      <section id="reveal" class="stack" hidden>
+        <h2 id="reveal-title" tabindex="-1">種明かし</h2>
+        <p class="notice">専用Workerが中継者役となり、投稿に1文を足す模擬です。実際のHTTPSの暗号化は維持されています。信頼できる別経路で得た原文のSHA-256があれば、受信した本文との違いを検出できます。中継者が同じ経路で本文とハッシュを両方差し替えられる場合、送信者を確かめるには信頼できる鍵を使ったHMACや電子署名が必要です。</p>
+        <p>追記は演習で作った文章です。本人の発言として扱わず、録画・スクリーンショットの外部共有は控えてください。</p>
+        <div id="reveal-posts" class="stack"></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
