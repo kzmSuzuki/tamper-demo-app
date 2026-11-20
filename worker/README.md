@@ -1,5 +1,14 @@
 # Cloudflare Worker API
 
-Node.js 24.15以降の24系、または26以上で `npm ci` を実行します。`npm test` はWorkers AIをモックし、D1向けSQLをメモリ上のSQLiteで実行します。`npm run typecheck` と `npm run lint` で静的検査を実行します。
+Node.js 24.15 以降の 24 系、または 26 以上が必要です。
 
-このワークスペースでの起動は[ルートREADME](../README.md#ローカルで動かす)、本番D1・Workers AI・Secretの設定は[デプロイ手順](../docs/09_deploy.md)を参照してください。`wrangler.jsonc` はローカル専用です。`wrangler.jsonc.example` が本番向けのテンプレートです。
+| コマンド | 内容 |
+| --- | --- |
+| `npm test` | テスト（Workers AI はモック、D1 向けの SQL はメモリ上の SQLite で実行） |
+| `npm run typecheck` / `npm run lint` | 型チェック / Lint |
+| `npm run dev` | ローカル起動（`127.0.0.1:8787`） |
+
+- `wrangler.jsonc` はローカル専用の設定です。
+- 本番用の設定 `wrangler.production.jsonc` は、`wrangler.jsonc.example` をもとに `../scripts/deploy-worker.sh` が生成します（Git 管理外）。
+
+セットアップとデプロイの手順は[ルートの README](../README.md) を参照してください。

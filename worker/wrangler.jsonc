@@ -9,12 +9,6 @@
 			"binding": "DB",
 			"database_name": "tamper-classroom-local",
 			"database_id": "00000000-0000-4000-8000-000000000001"
-		},
-		{
-			"binding": "tamper_classroom",
-			"database_name": "tamper-classroom",
-			"database_id": "7032ffe3-3637-4436-9084-f23fd50dc662",
-			"remote": true
 		}
 	],
 	"vars": {
